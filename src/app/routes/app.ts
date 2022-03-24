@@ -1,13 +1,10 @@
-import { Context } from "koa";
 import Router from "koa-router";
 import AppController from "../controllers/app";
 
 const routerInit = new Router({ prefix: "/v1/app" });
 
-routerInit.post("/test", AppController.test);
+routerInit.get("/getUpdateInfo", AppController.getUpdateInfo);
 
-routerInit.get("/test", (ctx: Context) => {
-  ctx.body = "asd";
-});
+routerInit.post("/feedback", AppController.postFeedback);
 
 export default routerInit;

@@ -1,5 +1,5 @@
 import { Context, Next } from "koa";
-import { LogPath } from "../config/constant";
+import { LogPath, LogFeedbackPath } from "../config/constant";
 
 const fs = require("fs");
 const path = require("path");
@@ -10,26 +10,39 @@ const logsDir = path.parse(LogPath).dir;
 if (!fs.existsSync(logsDir)) {
   fs.mkdirSync(logsDir);
 }
-
 // 配置log4.js
 log4js.configure({
   appenders: {
     console: { type: "console" },
-    dateFile: {
+    default: {
+      type: "dateFile",
+      pattern: "-yyyy-MM-dd",
+    },
+    req: {
       type: "dateFile",
       filename: LogPath,
+      pattern: "-yyyy-MM-dd",
+    },
+    feedback: {
+      type: "dateFile",
+      filename: LogFeedbackPath,
       pattern: "-yyyy-MM-dd",
     },
   },
   categories: {
     default: {
-      appenders: ["console", "dateFile"],
-      level: "error",
+      appenders: ["console", "req"],
+      level: "info",
+    },
+    feedback: {
+      appenders: ["console", "feedback"],
+      level: "all",
     },
   },
 });
 
-export const logger = log4js.getLogger("[Default]");
+export const logger = log4js.getLogger("default");
+export const loggerFeedback = log4js.getLogger("feedback");
 
 // logger中间件
 export const loggerMiddleware = async (ctx: Context, next: Next) => {
@@ -42,8 +55,8 @@ export const loggerMiddleware = async (ctx: Context, next: Next) => {
   const remoteAddress = ctx.headers["x-forwarded-for"] || ctx.ip || ctx.ips;
   const logText = `${ctx.method} ${ctx.status} ${
     ctx.url
-  } 请求参数： ${JSON.stringify(
-    ctx.request.ctx.body
-  )}  响应参数： ${JSON.stringify(ctx.body)} - ${remoteAddress} - ${ms}ms`;
+  } 请求参数： ${JSON.stringify(ctx.request.body)}  响应参数： ${JSON.stringify(
+    ctx.body
+  )} - ${remoteAddress} - ${ms}ms`;
   logger.info(logText);
 };
